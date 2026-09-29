@@ -61,6 +61,19 @@
 | `EXECUTOR_NICENESS_INCREMENT` | The niceness increment of subprocesses (if `MULTIPROCESSING=1`) and threads | `5`                                           | `2`                                             |
 | `DEBUG`                       | Enable debug logging or not?                                                | `1`                                           | `0`                                             |
 
+### AI translation settings
+
+Translation is enabled when `TRANSLATION_MODEL` is set. The title and content of each new post are translated once, before formatting, and shared by all subscriptions. HTML formatting, links and media are preserved. If a translation fails or breaks the HTML structure, the original is sent instead. Enabling it costs about 200MB of extra RAM.
+
+| Key                       | Description                                                                                                        | Example                        | Default              |
+|---------------------------|--------------------------------------------------------------------------------------------------------------------|--------------------------------|----------------------|
+| `TRANSLATION_MODEL`       | [LiteLLM model name](https://docs.litellm.ai/docs/providers), `provider/model`                                     | `deepseek/deepseek-chat`       |                      |
+| `TRANSLATION_TARGET_LANG` | Target language, in natural language                                                                               | `Japanese`                     | `Simplified Chinese` |
+| `TRANSLATION_API_KEY`     | API key. If unset, LiteLLM reads the provider's own variable (e.g. `OPENAI_API_KEY`)                               | `sk-xxx`                       |                      |
+| `TRANSLATION_API_BASE`    | Custom endpoint, e.g. an OpenAI-compatible API (use with `openai/<model>`) or Ollama                               | `https://openrouter.ai/api/v1` |                      |
+| `TRANSLATION_CONCURRENCY` | Maximum concurrent translation requests                                                                            | `5`                            | `2`                  |
+| `TRANSLATION_EXTRA_BODY`  | Extra JSON merged into the request body, e.g. to disable thinking                                                  | `{"thinking": {"type": "disabled"}}` |                      |
+
 ## Manager options
 
 > Manager options are options stored in the database. The bot manager can change it by using the `/set_option` command.

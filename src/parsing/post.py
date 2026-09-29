@@ -22,13 +22,15 @@ from ..errors_collection import MediaSendFailErrors
 from .utils import parse_entry, logger, Enclosure
 from .post_formatter import PostFormatter
 from .message import MessageDispatcher
+from .translation import translate_entry
 
 
 async def get_post_from_entry(entry, feed_title: str, feed_link: str = None) -> 'Post':
     entry_parsed = await parse_entry(entry, feed_link)
+    title, html = await translate_entry(entry_parsed.title, entry_parsed.content, entry_parsed.link)
     return Post(
-        html=entry_parsed.content,
-        title=entry_parsed.title,
+        html=html,
+        title=title,
         feed_title=feed_title,
         link=entry_parsed.link,
         author=entry_parsed.author,

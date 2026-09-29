@@ -25,6 +25,7 @@ import sys
 import colorlog
 import re
 import argparse
+import json
 from contextlib import suppress
 from telethon import TelegramClient
 from telethon.tl.types import User, InputPeerUser
@@ -363,6 +364,15 @@ NO_UVLOOP: Final = __bool_parser(os.environ.get('NO_UVLOOP'))
 MULTIPROCESSING: Final = __bool_parser(os.environ.get('MULTIPROCESSING'))
 EXECUTOR_NICENESS_INCREMENT: Final = int(os.environ.get('EXECUTOR_NICENESS_INCREMENT') or (2 * hasattr(os, 'nice')))
 DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
+
+# ----- translation config -----
+TRANSLATION_MODEL: Final = os.environ.get('TRANSLATION_MODEL')  # LiteLLM model, e.g. openai/gpt-4o-mini
+TRANSLATION_TARGET_LANG: Final = os.environ.get('TRANSLATION_TARGET_LANG') or 'Simplified Chinese'
+TRANSLATION_API_KEY: Final = os.environ.get('TRANSLATION_API_KEY')
+TRANSLATION_API_BASE: Final = os.environ.get('TRANSLATION_API_BASE')
+TRANSLATION_CONCURRENCY: Final = int(os.environ.get('TRANSLATION_CONCURRENCY') or 2)
+TRANSLATION_EXTRA_BODY: Final = json.loads(os.environ.get('TRANSLATION_EXTRA_BODY') or '{}')
+
 __configure_logging(  # config twice to make .env file work
     level=colorlog.DEBUG if DEBUG else colorlog.INFO,
     force=True
