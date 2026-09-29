@@ -36,6 +36,11 @@ PROMPT = (
     'Keep text that is already in {lang} unchanged. '
     'Output only the resulting HTML, without code fences or explanations.'
 )
+RETRY_PROMPT = (
+    f'Some tags are missing, malformed or altered. Every tag with a {ID_ATTR} attribute in my input must appear '
+    'exactly once in your output, written exactly as in the input. Rephrase the translation around the tags if needed. '
+    'Output only the corrected HTML.'
+)
 
 _semaphore: Optional[asyncio.Semaphore] = None
 
@@ -64,7 +69,7 @@ def _restore_attrs(html: str, attrs: list[dict]) -> Optional[str]:
     return str(soup) if len(seen) == len(attrs) else None
 
 
-async def _complete(html: str) -> str:
+async def _complete(messages: list[dict]) -> str:
     global _semaphore
     os.environ.setdefault('LITELLM_LOCAL_MODEL_COST_MAP', 'True')
     import litellm  # lazy: costs ~200MB RAM, only paid when translation is enabled
@@ -75,10 +80,7 @@ async def _complete(html: str) -> str:
     async with _semaphore:
         response = await litellm.acompletion(
             model=env.TRANSLATION_MODEL,
-            messages=[
-                {'role': 'system', 'content': PROMPT.format(lang=env.TRANSLATION_TARGET_LANG)},
-                {'role': 'user', 'content': html},
-            ],
+            messages=messages,
             api_key=env.TRANSLATION_API_KEY,
             api_base=env.TRANSLATION_API_BASE,
             extra_body=env.TRANSLATION_EXTRA_BODY or None,
@@ -93,14 +95,21 @@ async def _complete(html: str) -> str:
 
 async def _translate_html(html: str, link: Optional[str]) -> Optional[str]:
     stripped, attrs = _strip_attrs(html)
-    try:
-        translated = _restore_attrs(await _complete(stripped), attrs)
-    except Exception as e:
-        logger.warning(f'Translation failed, sending the original: {link}', exc_info=e)
-        return None
-    if translated is None:
-        logger.warning(f'Translation broke the HTML structure, sending the original: {link}')
-    return translated
+    messages = [
+        {'role': 'system', 'content': PROMPT.format(lang=env.TRANSLATION_TARGET_LANG)},
+        {'role': 'user', 'content': stripped},
+    ]
+    for _ in range(2):
+        try:
+            output = await _complete(messages)
+        except Exception as e:
+            logger.warning(f'Translation failed, sending the original: {link}', exc_info=e)
+            return None
+        if (translated := _restore_attrs(output, attrs)) is not None:
+            return translated
+        messages += [{'role': 'assistant', 'content': output}, {'role': 'user', 'content': RETRY_PROMPT}]
+    logger.warning(f'Translation broke the HTML structure, sending the original: {link}')
+    return None
 
 
 async def translate_entry(title: Optional[str], content: str, link: Optional[str]) -> tuple[Optional[str], str]:
