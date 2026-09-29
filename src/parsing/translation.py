@@ -81,6 +81,7 @@ async def _complete(html: str) -> str:
             ],
             api_key=env.TRANSLATION_API_KEY,
             api_base=env.TRANSLATION_API_BASE,
+            extra_body=env.TRANSLATION_EXTRA_BODY or None,
             timeout=60,
             num_retries=1,
         )
