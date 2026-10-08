@@ -90,6 +90,18 @@ class YummyCookieJar(aiohttp.abc.AbstractCookieJar):
     def quote_cookie(self) -> bool:
         return self.__real_cookie_jar.quote_cookie
 
+    @property
+    def unsafe(self) -> bool:
+        return self.__real_cookie_jar.unsafe
+
+    @property
+    def cookies(self):
+        return self.__real_cookie_jar.cookies
+
+    @property
+    def host_only_cookies(self):
+        return self.__real_cookie_jar.host_only_cookies
+
 
 class WebError(Exception):
     @staticmethod
